@@ -22,7 +22,6 @@ import redis.clients.jedis.JedisPoolConfig;
  * @create 2018-09-22 9:07
  **/
 @Configuration
-@EnableAutoConfiguration
 public class RedisConfig {
 
     private final Logger LOGGER = LoggerFactory.getLogger(RedisConfig.class);

@@ -13,7 +13,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableSwagger2
 @MapperScan("com.chat.repository")
-@EnableCaching     //开启基于注解的缓存
 public class ChatApplication {
 
 	public static void main(String[] args) {

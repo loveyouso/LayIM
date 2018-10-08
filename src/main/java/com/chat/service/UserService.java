@@ -14,6 +14,8 @@ import org.aspectj.weaver.ast.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,18 +34,19 @@ public class UserService implements UserMapper{
 
     private final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
-    @Autowired
-    private UserMapper userMapper;
-
     /**
      * @description: 退出群
      * @param groupNumber 群成员
      * @return: int
-    */
+     */
+    @CacheEvict(value = {"findUserById","findFriendGroupsById","findUserByGroupId"},allEntries = true)
     @Override
     public int leaveOutGroup(GroupNumber groupNumber) {
         return userMapper.leaveOutGroup(groupNumber);
     }
+
+    @Autowired
+    private UserMapper userMapper;
 
     /**
     * @Description: 添加群成员
@@ -62,6 +65,7 @@ public class UserService implements UserMapper{
      * @param uId 个人id
      * @return: int
     */
+    @CacheEvict(value = {"findUserById","findFriendGroupsById","findUserByGroupId"},allEntries = true)
     @Override
     public int removeFriend(Integer friendId, Integer uId) {
         if (friendId == null || uId == null){
@@ -77,6 +81,7 @@ public class UserService implements UserMapper{
      * @param avatar 头像地址
      * @return: int
     */
+    @CacheEvict(value = "findUserById", allEntries = true)
     @Transactional
     @Override
     public int updateAvatar(Integer userId, String avatar) {
@@ -85,14 +90,15 @@ public class UserService implements UserMapper{
         else
             return userMapper.updateAvatar(userId,avatar);
     }
-    
+
     /**
      * @Description: 移动好友分组
      * @param groupId 新的分组id
      * @param uId 被移动的好友id
      * @param mId 我的id
      * @return: int
-    */
+     */
+    @CacheEvict(value = {"findUserById","findFriendGroupsById","findUserByGroupId"},allEntries = true)
     @Transactional
     @Override
     public boolean changeGroup(Integer groupId, Integer uId, Integer mId) {
@@ -122,6 +128,7 @@ public class UserService implements UserMapper{
      * @param messageBoxId 消息盒子id
      * @return: boolean
     */
+    @CacheEvict(value = {"findUserById","findFriendGroupsById","findUserByGroupId"},allEntries = true)
     @Transactional
     public boolean addFriend(Integer mid,Integer mgid,Integer uid,Integer tgid,Integer messageBoxId){
         AddFriends addFriends = new AddFriends(mid,mgid,uid,tgid);
@@ -357,7 +364,8 @@ public class UserService implements UserMapper{
      * @description: 根据群组ID查询群里用户的信息 
      * @param gid	 
      * @return: java.util.List<com.chat.entity.User>
-    */ 
+    */
+    @Cacheable(value = "findUserByGroupId",keyGenerator = "wiselyKeyGenerator")
     @Override
     public List<User> findUserByGroupId(int gid) {
         List<User> list = userMapper.findUserByGroupId(gid);
@@ -368,7 +376,8 @@ public class UserService implements UserMapper{
      * @description: 根据id查询用户信息 
      * @param id	 
      * @return: com.chat.entity.User
-    */ 
+    */
+    @Cacheable(value = "findUserById",keyGenerator = "wiselyKeyGenerator")
     @Override
     public User findUserById(Integer id) {
         if(id != null)
@@ -377,9 +386,15 @@ public class UserService implements UserMapper{
             return null;
     }
 
+    /**
+     * @description 根据ID查询用户群组列表
+     * @param uid
+     * @return
+     */
+    @Cacheable(value = "findGroupsById",keyGenerator = "wiselyKeyGenerator")
     @Override
     public List<GroupList> findGroupsById(int uid) {
-        return null;
+        return userMapper.findGroupsById(uid);
     }
 
     /** 
@@ -407,7 +422,8 @@ public class UserService implements UserMapper{
      * @description: 保存用户信息
      * @param user	用户
      * @return: int
-    */ 
+    */
+    @CacheEvict(value = {"findUserById","findFriendGroupsById","findUserByGroupId"}, allEntries = true)
     @Transactional
     @Override
     public int saveUser(User user) {
